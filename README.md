@@ -48,6 +48,9 @@ The system consists of:
 * Geo-fencing system
 * Authority monitoring dashboard
 * Blockchain identity layer
+  
+##  System Architecture
+![Architecture Diagram](architecture.png)
 
 ---
 
@@ -88,15 +91,15 @@ The system consists of:
 
 ###  Live Map Dashboard
 
-![Map Dashboard](screenshots/map-dashboard.png)
+![Dashboard Map](dashboard_map.png)
 
 ###  Panic Alerts & AI Anomalies
 
-![Alerts](screenshots/alerts.png)
+![Authority Dashboard](authority_panel.png)
 
 ### Tourist Dashboard
 
-![Tourist UI](screenshots/tourist-ui.png)
+![Tourist Form](tourist_form.png)
 
 ---
 
