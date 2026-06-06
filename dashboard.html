@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GeoGuardians – Live Dashboard</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #89f7fe, #66a6ff);
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #ffffff;
+      margin-bottom: 25px;
+    }
+
+    h2 {
+      color: #2a3f54;
+      margin-top: 25px;
+    }
+
+    #legend, #map, #tourists, #panics, #anomalies {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+      margin-bottom: 20px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background: #4a90e2;
+      color: white;
+    }
+
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    tr:hover { background-color: #eef4ff; }
+
+    .ai-alert { background-color: #ffe5e5; }
+    .panic-alert { background-color: #fff4cc; }
+    .tourist-record { background-color: #e6ffe6; }
+
+    #legend span {
+      display: inline-block;
+      padding: 6px 12px;
+      margin-right: 10px;
+      border-radius: 20px;
+    }
+
+    .legend-ai { background-color: #ffcccc; }
+    .legend-panic { background-color: #fff3cd; }
+    .legend-tourist { background-color: #ccffcc; }
+
+    #map {
+      height: 450px;
+      width: 100%;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🚨 GeoGuardians Dashboard <span style="color:#00ffcc;">LIVE</span></h1>
+
+<div id="legend">
+  <strong>Legend:</strong>
+  <span class="legend-tourist">Registered Tourist</span>
+  <span class="legend-ai">AI Anomaly</span>
+  <span class="legend-panic">Panic Alert</span>
+</div>
+
+<h2>🗺️ Tourist Map</h2>
+<div id="map"></div>
+
+<h2>📋 Registered Tourists</h2>
+<div id="tourists"></div>
+
+<h2>🚨 Panic Alerts</h2>
+<div id="panics"></div>
+
+<h2>⚠️ AI Anomalies</h2>
+<div id="anomalies"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
+<script>
+const TOURISTS_URL = "http://127.0.0.1:5000/tourists";
+const ALERTS_URL = "http://127.0.0.1:5000/alerts";
+const LOCATIONS_URL = "http://127.0.0.1:5000/locations";
+
+let map = L.map('map').setView([13.09, 80.28], 12);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+let touristMarkers = [];
+let alertMarkers = [];
+let heatLayer;
+let notifiedAlerts = new Set();
+
+// ---------------- TOURISTS ----------------
+function loadTourists() {
+  fetch(TOURISTS_URL)
+    .then(res => res.json())
+    .then(data => {
+      let html = `<table>
+        <tr><th>ID</th><th>Name</th><th>Passport</th><th>Phone</th><th>Emergency</th><th>Nationality</th></tr>`;
+      data.forEach(t => {
+        html += `<tr class="tourist-record">
+          <td>${t.id}</td><td>${t.name}</td><td>${t.passport}</td>
+          <td>${t.phone}</td><td>${t.emergency}</td><td>${t.nationality}</td>
+        </tr>`;
+      });
+      html += "</table>";
+      document.getElementById("tourists").innerHTML = html;
+    });
+}
+
+// ---------------- ALERTS ----------------
+function loadAlerts() {
+  fetch(ALERTS_URL)
+    .then(res => res.json())
+    .then(data => {
+
+      let panics = data.filter(a => a[2] === "Panic Button Alert");
+      let anomalies = data.filter(a => a[2] === "AI Anomaly Detected");
+
+      // Tables
+      let pHTML = `<table><tr><th>#</th><th>ID</th><th>Status</th><th>Time</th></tr>`;
+      panics.forEach((p,i)=>{
+        pHTML += `<tr class="panic-alert"><td>${i+1}</td><td>${p[1]}</td><td>${p[3]}</td><td>${p[4]}</td></tr>`;
+        notifyAlert(p);
+      });
+      pHTML += "</table>";
+      document.getElementById("panics").innerHTML = pHTML;
+
+      let aHTML = `<table><tr><th>#</th><th>ID</th><th>Status</th><th>Time</th></tr>`;
+      anomalies.forEach((a,i)=>{
+        aHTML += `<tr class="ai-alert"><td>${i+1}</td><td>${a[1]}</td><td>${a[3]}</td><td>${a[4]}</td></tr>`;
+        notifyAlert(a);
+      });
+      aHTML += "</table>";
+      document.getElementById("anomalies").innerHTML = aHTML;
+
+      // Clear markers
+      alertMarkers.forEach(m => map.removeLayer(m));
+      alertMarkers = [];
+
+      let heatData = [];
+
+      data.forEach(a => {
+        let color = a[2] === "AI Anomaly Detected" ? "red" : "orange";
+
+        let marker = L.circleMarker([a[5], a[6]], {
+          radius: 10,
+          color: color,
+          fillColor: color,
+          fillOpacity: 0.9
+        }).addTo(map);
+
+        // Pulsing animation
+        let growing = true;
+        setInterval(() => {
+          let r = marker.getRadius();
+          r = growing ? r + 1 : r - 1;
+          if (r > 15) growing = false;
+          if (r < 8) growing = true;
+          marker.setRadius(r);
+        }, 200);
+
+        marker.bindPopup(`<b>${a[2]}</b><br>ID: ${a[1]}`);
+
+        alertMarkers.push(marker);
+
+        // Heatmap data
+        let weight = (a[2] === "AI Anomaly Detected") ? 1.0 : 0.6;
+        heatData.push([a[5], a[6], weight]);
+      });
+
+      // Heatmap
+      if (heatLayer) map.removeLayer(heatLayer);
+
+      heatLayer = L.heatLayer(heatData, {
+        radius: 25,
+        blur: 15,
+        maxZoom: 17
+      }).addTo(map);
+    });
+}
+
+// ---------------- LOCATIONS ----------------
+function loadMapTourists() {
+  fetch(LOCATIONS_URL)
+    .then(res => res.json())
+    .then(data => {
+      touristMarkers.forEach(m => map.removeLayer(m));
+      touristMarkers = [];
+
+      data.forEach(l => {
+        let marker = L.circleMarker([l.lat, l.lon], {
+          radius: 6,
+          color: 'green',
+          fillColor: 'green',
+          fillOpacity: 0.6
+        }).addTo(map);
+
+        touristMarkers.push(marker);
+      });
+    });
+}
+
+// ---------------- NOTIFICATIONS ----------------
+function notifyAlert(a) {
+  if (!notifiedAlerts.has(a[0])) {
+    notifiedAlerts.add(a[0]);
+    if (Notification.permission === "granted") {
+      new Notification(`🚨 ${a[2]}`, {
+        body: `Tourist ID: ${a[1]}`
+      });
+    }
+  }
+}
+
+if (Notification.permission !== "granted") {
+  Notification.requestPermission();
+}
+
+// ---------------- AUTO REFRESH ----------------
+setInterval(() => {
+  loadTourists();
+  loadAlerts();
+  loadMapTourists();
+}, 5000);
+
+// Initial load
+loadTourists();
+loadAlerts();
+loadMapTourists();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GeoGuardians – Dashboard</title>
+    <style>
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #333;
+    padding: 20px;
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #ffffff;
+  }
+
+  .live {
+    color: #00ffcc;
+  }
+
+  /* CARD STYLE */
+  .section {
+    margin-top: 25px;
+    padding: 20px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  }
+
+  /* HEADER WITH ICON */
+  .section h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #333;
+  }
+
+  /* BORDER COLORS */
+  .tourist-section { border-left: 6px solid #4CAF50; }
+  .panic-section   { border-left: 6px solid #FFC107; }
+  .ai-section      { border-left: 6px solid #FF5252; }
+  .fir-section     { border-left: 6px solid #2196F3; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  th, td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+  }
+
+  th {
+    background-color: #f5f5f5;
+    color: #333;
+  }
+
+  /* ROW COLORS */
+  .panic { background-color: #fff8e1; }
+  .ai { background-color: #ffeaea; }
+  .fir { background-color: #e3f2fd; }
+
+  tr:hover {
+    background-color: #f1f1f1;
+  }
+</style>
+</head>
+<body>
+
+<h1>🚨 GeoGuardians – Tourist Safety Dashboard <span class="live">LIVE</span></h1>
+
+<div class="section">
+  <h2>Registered Tourists</h2>
+  <div id="tourists">Loading tourists...</div>
+</div>
+
+<div class="section">
+  <h2>Panic Alerts</h2>
+  <div id="panics">Loading panic alerts...</div>
+</div>
+
+<div class="section">
+  <h2>AI Anomalies</h2>
+  <div id="anomalies">Loading AI anomalies...</div>
+</div>
+
+<div class="section">
+  <h2>📄 e-FIR Records</h2>
+  <div id="efir">Loading e-FIR records...</div>
+</div>
+
+<script>
+const TOURISTS_URL = "http://127.0.0.1:5000/tourists";
+const ALERTS_URL   = "http://127.0.0.1:5000/alerts";
+const EFIR_URL     = "http://127.0.0.1:5000/efir";
+
+// Load registered tourists
+function loadTourists() {
+  fetch(TOURISTS_URL)
+    .then(res => res.json())
+    .then(data => {
+      let html = `<table>
+        <tr><th>ID</th><th>Name</th><th>Passport</th><th>Phone</th><th>Emergency Contact</th><th>Nationality</th></tr>`;
+      data.forEach(t => {
+        html += `<tr>
+          <td>${t.id}</td><td>${t.name}</td><td>${t.passport}</td><td>${t.phone}</td><td>${t.emergency}</td><td>${t.nationality}</td>
+        </tr>`;
+      });
+      html += "</table>";
+      document.getElementById("tourists").innerHTML = html;
+    })
+    .catch(err => document.getElementById("tourists").innerHTML = "Error loading tourists");
+}
+
+// Load panic alerts from /alerts
+function loadPanics() {
+  fetch(ALERTS_URL)
+    .then(res => res.json())
+    .then(data => {
+      let panics = data.filter(a => a[2] === "Panic Button Alert");
+      let html = `<table><tr><th>#</th><th>Tourist ID</th><th>Status</th><th>Time</th></tr>`;
+      panics.forEach((p,i) => {
+        html += `<tr class="panic">
+          <td>${i+1}</td><td>${p[1]}</td><td>${p[3]}</td><td>${p[4]}</td>
+        </tr>`;
+      });
+      html += "</table>";
+      document.getElementById("panics").innerHTML = html;
+    })
+    .catch(err => document.getElementById("panics").innerHTML = "Error loading panic alerts");
+}
+
+// Load AI anomalies
+function loadAnomalies() {
+  fetch(ALERTS_URL)
+    .then(res => res.json())
+    .then(data => {
+      let anomalies = data.filter(a => a[2] === "AI Anomaly Detected");
+      let html = `<table><tr><th>#</th><th>Tourist ID</th><th>Status</th><th>Time</th></tr>`;
+      anomalies.forEach((a,i) => {
+        html += `<tr class="ai">
+          <td>${i+1}</td><td>${a[1]}</td><td>${a[3]}</td><td>${a[4]}</td>
+        </tr>`;
+      });
+      html += "</table>";
+      document.getElementById("anomalies").innerHTML = html;
+    })
+    .catch(err => document.getElementById("anomalies").innerHTML = "Error loading anomalies");
+}
+
+// Load e-FIR records
+function loadEFIR() {
+  fetch(EFIR_URL)
+    .then(res => res.json())
+    .then(data => {
+      let html = `<table><tr><th>FIR ID</th><th>Tourist ID</th><th>Description</th><th>Status</th><th>Time</th></tr>`;
+      data.forEach(f => {
+        html += `<tr class="fir">
+          <td>${f[0]}</td><td>${f[1]}</td><td>${f[2]}</td><td>${f[3]}</td><td>${f[4]}</td>
+        </tr>`;
+      });
+      html += "</table>";
+      document.getElementById("efir").innerHTML = html;
+    })
+    .catch(err => document.getElementById("efir").innerHTML = "Error loading e-FIR records");
+}
+
+// Auto-refresh every 5 seconds
+setInterval(()=>{
+  loadTourists();
+  loadPanics();
+  loadAnomalies();
+  loadEFIR();
+},5000);
+
+// Initial load
+loadTourists();
+loadPanics();
+loadAnomalies();
+loadEFIR();
+</script>
+
+</body>
+</html>

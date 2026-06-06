@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GeoGuardians – Tourist App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    padding: 20px;
+    margin: 0;
+  }
+
+  h2 {
+    text-align: center;
+    color: white;
+    margin-bottom: 20px;
+  }
+
+  /* CARD BOX */
+  .box {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 20px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+  }
+
+  input, button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    font-size: 16px;
+    border-radius: 6px;
+  }
+
+  input {
+    border: 1px solid #ccc;
+  }
+
+  button {
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  /* BUTTON COLORS */
+  .register {
+    background: #007bff;
+    color: white;
+  }
+
+  .register:hover {
+    background: #0056b3;
+  }
+
+  .location {
+    background: #28a745;
+    color: white;
+  }
+
+  .location:hover {
+    background: #1e7e34;
+  }
+
+  .panic {
+    background: #ff3333;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+  }
+
+  .panic:hover {
+    background: #cc0000;
+  }
+
+  /* SECTION HEADINGS */
+  h3 {
+    margin-bottom: 10px;
+    color: #333;
+  }
+
+  /* TOURIST ID DISPLAY */
+  #tourist_id_display {
+    color: #007bff;
+    font-size: 16px;
+  }
+</style>
+</head>
+<body>
+
+<h2>📱 GeoGuardians – Tourist Safety</h2>
+
+<div class="box">
+  <h3>Register</h3>
+  <input id="name" placeholder="Name">
+  <input id="passport" placeholder="Passport Number">
+  <input id="phone" placeholder="Phone">
+  <input id="emergency" placeholder="Emergency Contact">
+  <input id="nationality" placeholder="Nationality">
+  <button class="register" onclick="register()">Register</button>
+  <p id="tourist_id_display" style="font-weight:bold; margin-top:10px;"></p>
+</div>
+
+<div class="box">
+  <h3>Send Location</h3>
+  <input id="tourist_id" placeholder="Tourist ID">
+  <input id="lat" placeholder="Latitude">
+  <input id="lon" placeholder="Longitude">
+  <button class="location" onclick="sendLocation()">Send Location</button>
+</div>
+
+<div class="box">
+  <h3>Emergency</h3>
+  <button class="panic" onclick="panic()">🚨 PANIC</button>
+</div>
+
+<script>
+const BASE = "http://127.0.0.1:5000";
+
+function register() {
+  fetch(BASE + "/register", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      name: document.getElementById('name').value,
+      passport: document.getElementById('passport').value,
+      phone: document.getElementById('phone').value,
+      emergency: document.getElementById('emergency').value,
+      nationality: document.getElementById('nationality').value
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    // Show popup
+    alert("Registered successfully!");
+    // Display Tourist ID (from backend response)
+    if(data.tourist_id){
+      document.getElementById('tourist_id_display').innerText = 
+        "Your Tourist ID: " + data.tourist_id;
+      document.getElementById('tourist_id').value = data.tourist_id;
+    }
+  })
+  .catch(err => alert("Error registering: " + err));
+}
+
+function sendLocation() {
+  fetch(BASE + "/location", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      tourist_id: document.getElementById('tourist_id').value,
+      lat: document.getElementById('lat').value,
+      lon: document.getElementById('lon').value
+    })
+  })
+  .then(res => res.json())
+  .then(data => alert("Location sent"))
+  .catch(err => alert("Error sending location: " + err));
+}
+
+function panic() {
+  fetch(BASE + "/panic", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      tourist_id: document.getElementById('tourist_id').value
+    })
+  })
+  .then(res => res.json())
+  .then(data => alert("🚨 Panic alert sent"))
+  .catch(err => alert("Error sending panic: " + err));
+}
+</script>
+
+</body>
+</html>
