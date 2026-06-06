@@ -1,5 +1,11 @@
 # Smart Tourist Safety Monitoring and Incident Response System
 
+ Live demo / prototype showcasing real-time monitoring and alert system
+
+⭐ A real-time AI-powered system for enhancing tourist safety using smart monitoring and rapid incident response.
+
+---
+
 ##  Overview
 
 The Smart Tourist Safety Monitoring and Incident Response System is a technology-driven solution designed to enhance tourist safety using real-time monitoring, secure identity verification, and rapid emergency response.
@@ -23,7 +29,7 @@ Existing systems are fragmented and lack real-time coordination, leading to slow
 
 ##  Proposed Solution
 
-This system provides a **centralized safety platform** with:
+This system provides a centralized safety platform with:
 
 * Real-time location monitoring
 * AI-based anomaly detection
@@ -34,11 +40,14 @@ This system provides a **centralized safety platform** with:
 
 ##  System Architecture
 
-The system consists of three main components:
+The system consists of:
 
-1. **Blockchain-based Digital Tourist ID**
-2. **Mobile Safety Application**
-3. **AI-powered Authority Dashboard**
+* Mobile application (Tourist Interface)
+* Backend server (APIs & data processing)
+* AI anomaly detection module
+* Geo-fencing system
+* Authority monitoring dashboard
+* Blockchain identity layer
 
 ---
 
@@ -72,6 +81,73 @@ The system consists of three main components:
 * **AI Module:** Python (Anomaly Detection)
 * **Blockchain:** Ethereum / Hyperledger
 * **Maps & Location:** Google Maps API
+
+---
+
+##  Screenshots
+
+###  Live Map Dashboard
+
+![Map Dashboard](screenshots/map-dashboard.png)
+
+###  Panic Alerts & AI Anomalies
+
+![Alerts](screenshots/alerts.png)
+
+### Tourist Dashboard
+
+![Tourist UI](screenshots/tourist-ui.png)
+
+---
+
+## How to Run
+
+1. Clone the repository
+2. Start backend server (Node.js / Flask)
+3. Ensure APIs are running:
+
+   * /tourists
+   * /alerts
+   * /locations
+4. Open `authority-dashboard.html` in browser
+5. Open `tourist-dashboard.html` for user interface
+
+---
+
+## 📁 Project Structure
+
+```
+smart-tourist-safety-system/
+ ├── frontend/
+ │    ├── authority-dashboard.html
+ │    ├── tourist-dashboard.html
+ │    └── dashboard-ui.html
+ │
+ ├── screenshots/
+ │    ├── map-dashboard.png
+ │    ├── alerts.png
+ │    └── tourist-ui.png
+ │
+ ├── README.md
+```
+
+---
+
+##  User Interfaces
+
+###  Authority Dashboard
+
+* Monitor tourists in real-time
+* View panic alerts and AI anomalies
+* Track locations on live map
+* Access e-FIR records
+
+###  Tourist Dashboard
+
+* View safety status
+* Receive alerts and warnings
+* Trigger emergency panic button
+* Navigate safe and restricted zones
 
 ---
 
@@ -112,10 +188,26 @@ The system consists of three main components:
 
 ---
 
-## Authors
+## Project Highlights
 
-* Sharmili P.
+* Multi-user system (Tourist + Authority)
+* Real-time monitoring dashboard
+* AI-powered anomaly detection
+* Blockchain-based identity security
+* Interactive map with alerts
+
 ---
 
- If you found this project interesting, feel free to star the repository!
+##  Note
 
+This project is a prototype demonstrating the integration of AI, Blockchain, and Geo-fencing technologies for enhancing tourist safety systems.
+
+---
+
+##  Author
+
+**Sharmili P.**
+
+---
+
+⭐ If you found this project interesting, feel free to star the repository!
